@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bracket Generator</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Bracket Generator</h1>
+      <p class="site-tagline">Upload your roster once, generate qual groups and playoff brackets in seconds.</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Section 1: Intro & shared data input -->
+    <section id="intro" class="section section-hero">
+      <div class="container">
+        <div class="card">
+          <h2>Get started</h2>
+          <p class="lead">
+            Upload a spreadsheet with your team list, then jump to the generator you need.
+            Everything runs in your browser — nothing is uploaded to a server.
+          </p>
+
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
+            <div class="upload-zone-inner">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+              </svg>
+              <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
+              <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
+            </div>
+          </div>
+
+          <div class="file-status" id="file-status" hidden>
+            <span class="status-dot status-dot--ok"></span>
+            <span id="file-status-text"></span>
+            <button type="button" class="btn-text" id="clear-file">Clear</button>
+          </div>
+
+          <details class="instructions">
+            <summary>How should my spreadsheet be organized?</summary>
+            <div class="instructions-body">
+              <p>Put every team name in <strong>column A</strong>, starting at the top-left cell (<strong>A1</strong>).</p>
+              <ul>
+                <li>One team per row — no blank rows between names.</li>
+                <li>Column A only; other columns are ignored.</li>
+                <li>Include a header like “Team” in A1 if you want — we detect and skip it automatically.</li>
+              </ul>
+              <p><strong>From Google Sheets:</strong> File → Download → Microsoft Excel (.xlsx) or Comma-separated values (.csv), then upload here.</p>
+              <div class="example-table-wrap">
+                <table class="example-table">
+                  <thead><tr><th></th><th>A</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>Team Alpha</td></tr>
+                    <tr><td>2</td><td>Team Beta</td></tr>
+                    <tr><td>3</td><td>Team Gamma</td></tr>
+                    <tr><td>4</td><td>Team Delta</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+
+          <div class="nav-buttons">
+            <button type="button" class="btn btn-primary" data-scroll-to="qual-bracket">
+              Qual bracket generator
+            </button>
+            <button type="button" class="btn btn-secondary" data-scroll-to="playoff-bracket">
+              Playoff bracket generator
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Qual bracket -->
+    <section id="qual-bracket" class="section section-qual">
+      <div class="container">
+        <div class="card">
+          <div class="section-header">
+            <span class="section-badge">Qualifiers</span>
+            <h2>Qual bracket generator</h2>
+            <p class="section-desc">
+              Divide teams into balanced groups and produce a round-robin match schedule for each group.
+            </p>
+          </div>
+
+          <div class="teams-preview" id="teams-preview" hidden>
+            <h3>Loaded teams <span class="count" id="team-count"></span></h3>
+            <ul class="team-list" id="team-list"></ul>
+          </div>
+
+          <div class="empty-state" id="qual-empty-state">
+            <p>Upload a team list in the section above to configure qual groups.</p>
+          </div>
+
+          <form class="qual-form" id="qual-form" hidden>
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="group-size">Group size</label>
+                <input type="number" id="group-size" min="2" max="32" value="4" required>
+                <span class="field-hint">Number of teams per group. Leftover teams go into the final group.</span>
+              </div>
+              <div class="form-field">
+                <label for="games-per-team">Games per team (within group)</label>
+                <input type="number" id="games-per-team" min="1" max="20" value="3" required>
+                <span class="field-hint">Each team plays this many group-stage matches. Max without rematches is group size − 1.</span>
+              </div>
+            </div>
+
+            <div class="alert alert-info" id="schedule-note" hidden></div>
+
+            <div class="download-block">
+              <button type="submit" class="btn btn-primary btn-lg" id="download-qual">
+                Download qual bracket (.xlsx)
+              </button>
+              <p class="download-desc">
+                Your download includes two sheets: <strong>Groups</strong> (teams sorted into Group A, B, C…)
+                and <strong>Schedule</strong> (every group match listed by round with home/away teams).
+                Teams are shuffled randomly into groups for fairness.
+              </p>
+            </div>
+          </form>
+
+          <div class="error-box" id="qual-error" hidden role="alert"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Playoff bracket (placeholder) -->
+    <section id="playoff-bracket" class="section section-playoff">
+      <div class="container">
+        <div class="card card-muted">
+          <div class="section-header">
+            <span class="section-badge section-badge--muted">Coming soon</span>
+            <h2>Playoff bracket generator</h2>
+            <p class="section-desc">
+              Single-elimination playoff brackets will be available here. Use the qual generator above in the meantime.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Bracket Generator — runs entirely in your browser.</p>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script src="js/qual-bracket.js"></script>
+</body>
+</html>
