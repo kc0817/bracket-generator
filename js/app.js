@@ -155,7 +155,10 @@ function initTeamInput(section) {
 
   if (!zone || !input) return;
 
-  zone.addEventListener("click", () => input.click());
+  zone.addEventListener("click", (e) => {
+    if (e.target.closest(".upload-zone-clear")) return;
+    input.click();
+  });
 
   input.addEventListener("change", (e) => {
     const file = e.target.files[0];

@@ -55,6 +55,7 @@
 
             <div class="upload-zone" id="qual-upload-zone">
               <input type="file" id="qual-team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
+              <button type="button" class="upload-zone-clear" id="qual-upload-clear" hidden aria-label="Remove file">&times;</button>
               <div class="upload-zone-inner">
                 <div class="upload-zone-prompt" id="qual-upload-prompt">
                   <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -114,13 +115,13 @@
                 placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
               ></textarea>
               <div class="manual-input-actions">
-                <button type="button" class="btn btn-primary btn-sm" id="qual-save-manual-btn" disabled>Save</button>
+                <button type="button" class="btn btn-primary btn-sm" id="qual-save-manual-btn">Save</button>
               </div>
             </div>
           </div>
 
           <div class="empty-state" id="qual-empty-state">
-            <p>Add at least 2 teams above to preview qual groups and schedule.</p>
+            <p>Save at least 2 teams above, then click Generate to create groups and a schedule.</p>
           </div>
 
           <form class="qual-form" id="qual-form" hidden>
@@ -137,9 +138,13 @@
               </div>
             </div>
 
+            <div class="generate-actions">
+              <button type="button" class="btn btn-primary" id="qual-generate-btn" disabled>Generate</button>
+            </div>
+
             <div class="alert alert-info" id="schedule-note" hidden></div>
 
-            <div class="qual-bracket-preview" id="qual-bracket-preview">
+            <div class="qual-bracket-preview" id="qual-bracket-preview" hidden>
               <div class="qual-preview-section">
                 <h3 class="qual-preview-title">Groups</h3>
                 <div class="qual-groups-grid" id="qual-groups-display"></div>
@@ -150,7 +155,7 @@
               </div>
             </div>
 
-            <div class="download-block">
+            <div class="download-block" id="qual-download-block" hidden>
               <button type="submit" class="btn btn-primary btn-lg" id="download-qual">
                 Download qual bracket (.xlsx)
               </button>
