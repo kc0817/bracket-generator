@@ -156,19 +156,14 @@ function buildExcelWorkbook(groups) {
     groupsRows.push([]);
   }
 
-  const scheduleRows = [["Group", "Round", "Match", "Team 1", "Team 2"]];
+  const scheduleRows = [["Group", "Match", "Team 1", "Team 2"]];
   for (const group of groups) {
-    group.rounds.forEach((matches, roundIdx) => {
-      matches.forEach((match, matchIdx) => {
-        scheduleRows.push([
-          group.label,
-          roundIdx + 1,
-          matchIdx + 1,
-          match[0],
-          match[1],
-        ]);
-      });
-    });
+    let matchNum = 1;
+    for (const matches of group.rounds) {
+      for (const match of matches) {
+        scheduleRows.push([group.label, matchNum++, match[0], match[1]]);
+      }
+    }
     scheduleRows.push([]);
   }
 
@@ -472,20 +467,26 @@ function renderScheduleDisplay(groups) {
   if (!container) return;
 
   const rows = [];
-  for (const group of groups) {
-    group.rounds.forEach((matches, roundIdx) => {
-      matches.forEach((match, matchIdx) => {
+  for (let g = 0; g < groups.length; g++) {
+    const group = groups[g];
+    let matchNum = 1;
+
+    for (const matches of group.rounds) {
+      for (const match of matches) {
         rows.push(`
           <tr>
             <td>Group ${escapeHtml(group.label)}</td>
-            <td>${roundIdx + 1}</td>
-            <td>${matchIdx + 1}</td>
+            <td>${matchNum++}</td>
             <td>${escapeHtml(match[0])}</td>
             <td>${escapeHtml(match[1])}</td>
           </tr>
         `);
-      });
-    });
+      }
+    }
+
+    if (g < groups.length - 1) {
+      rows.push('<tr class="qual-schedule-spacer" aria-hidden="true"><td colspan="4"></td></tr>');
+    }
   }
 
   if (rows.length === 0) {
@@ -498,7 +499,6 @@ function renderScheduleDisplay(groups) {
       <thead>
         <tr>
           <th>Group</th>
-          <th>Round</th>
           <th>Match</th>
           <th>Team 1</th>
           <th>Team 2</th>
