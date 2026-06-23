@@ -91,7 +91,8 @@ function generateRoundRobinRounds(teams) {
 
 /**
  * Build schedule with exactly `gamesPerTeam` matches per team.
- * Uses round-robin rounds first; cycles with rematches if more games are requested.
+ * Adds full round-robin rounds until every team has played enough games,
+ * then cycles with rematches if more games are requested.
  */
 function buildGroupSchedule(teams, gamesPerTeam) {
   if (teams.length < 2) {
@@ -101,28 +102,41 @@ function buildGroupSchedule(teams, gamesPerTeam) {
   const maxWithoutRematch = teams.length - 1;
   const baseRounds = generateRoundRobinRounds(teams);
   const selectedRounds = [];
+  const gamesPlayed = Object.fromEntries(teams.map((team) => [team, 0]));
+
+  function allTeamsSatisfied() {
+    return teams.every((team) => gamesPlayed[team] >= gamesPerTeam);
+  }
+
+  function applyRound(round) {
+    const matches = round.map(([a, b]) => [`${a}`, `${b}`]);
+    selectedRounds.push(matches);
+    for (const [a, b] of matches) {
+      gamesPlayed[a]++;
+      gamesPlayed[b]++;
+    }
+  }
+
   let roundIndex = 0;
   let cycle = 1;
 
-  while (selectedRounds.length < gamesPerTeam && cycle <= 10) {
+  while (!allTeamsSatisfied() && cycle <= 10) {
     if (baseRounds.length === 0) break;
 
-    const sourceRound = baseRounds[roundIndex % baseRounds.length];
-    selectedRounds.push(
-      sourceRound.map(([a, b]) => [`${a}`, `${b}`])
-    );
+    applyRound(baseRounds[roundIndex % baseRounds.length]);
     roundIndex++;
     if (roundIndex % baseRounds.length === 0) cycle++;
   }
 
-  const trimmedRounds = selectedRounds.slice(0, gamesPerTeam);
-
   let warning = null;
-  if (gamesPerTeam > maxWithoutRematch) {
-    warning = `Requested ${gamesPerTeam} games per team, but a group of ${teams.length} can only play each opponent once (${maxWithoutRematch} games) without rematches. Extra rounds include rematches.`;
+  if (!allTeamsSatisfied()) {
+    warning = `Could not schedule ${gamesPerTeam} games per team for a group of ${teams.length}.`;
+  } else if (gamesPerTeam > maxWithoutRematch) {
+    warning =
+      `Requested ${gamesPerTeam} games per team, but a group of ${teams.length} can only play each opponent once (${maxWithoutRematch} games) without rematches. Extra rounds include rematches.`;
   }
 
-  return { rounds: trimmedRounds, warning };
+  return { rounds: selectedRounds, warning };
 }
 
 function generateQualBracket(teams, groupSize, gamesPerTeam, randomShuffle) {
