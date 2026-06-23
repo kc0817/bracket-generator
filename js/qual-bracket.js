@@ -175,43 +175,25 @@ function updateScheduleNote(groupSize, gamesPerTeam) {
   }
 }
 
-function renderTeamsPreview(teams) {
-  const preview = document.getElementById("teams-preview");
+function renderQualTeamsPreview(teams) {
+  const preview = document.getElementById("qual-teams-preview");
   const empty = document.getElementById("qual-empty-state");
   const form = document.getElementById("qual-form");
-  const list = document.getElementById("team-list");
-  const count = document.getElementById("team-count");
   const errorEl = document.getElementById("qual-error");
 
+  renderTeamsPreview("qual", teams);
   errorEl.hidden = true;
 
   if (teams.length === 0) {
-    preview.hidden = true;
     form.hidden = true;
-    empty.hidden = false;
     return;
   }
 
-  empty.hidden = true;
-  preview.hidden = false;
   form.hidden = false;
-
-  count.textContent = `(${teams.length})`;
-  list.innerHTML = teams
-    .map((t) => `<li>${escapeHtml(t)}</li>`)
-    .join("");
 
   const groupSize = parseInt(document.getElementById("group-size").value, 10) || 4;
   const gamesPerTeam = parseInt(document.getElementById("games-per-team").value, 10) || 3;
   updateScheduleNote(groupSize, gamesPerTeam);
-}
-
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function initQualBracket() {
@@ -220,8 +202,8 @@ function initQualBracket() {
   const gamesInput = document.getElementById("games-per-team");
   const errorEl = document.getElementById("qual-error");
 
-  document.addEventListener("teams-updated", (e) => {
-    renderTeamsPreview(e.detail.teams);
+  document.addEventListener("qual-teams-updated", (e) => {
+    renderQualTeamsPreview(e.detail.teams);
   });
 
   function onSettingsChange() {
@@ -237,13 +219,13 @@ function initQualBracket() {
     e.preventDefault();
     errorEl.hidden = true;
 
-    const teams = AppState.teams;
+    const teams = AppState.qual.teams;
     const groupSize = parseInt(groupSizeInput.value, 10);
     const gamesPerTeam = parseInt(gamesInput.value, 10);
 
     try {
       if (teams.length < 2) {
-        throw new Error("Upload a team list with at least 2 teams first.");
+        throw new Error("Add at least 2 teams using the upload or manual entry above.");
       }
       const groups = generateQualBracket(teams, groupSize, gamesPerTeam);
       downloadQualBracket(groups);

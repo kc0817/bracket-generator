@@ -1,10 +1,10 @@
 /**
- * Shared app state and UI: file upload, team parsing, smooth scroll navigation.
+ * Shared app state and UI: file upload, manual entry, team parsing, smooth scroll navigation.
  */
 
 const AppState = {
-  teams: [],
-  fileName: null,
+  qual: { teams: [], sourceLabel: null },
+  playoff: { teams: [], sourceLabel: null },
 };
 
 const HEADER_KEYWORDS = new Set([
@@ -29,35 +29,71 @@ function parseTeamsFromWorkbook(workbook) {
   return teams;
 }
 
-function setTeams(teams, fileName) {
-  AppState.teams = teams;
-  AppState.fileName = fileName;
-  updateFileStatus();
-  document.dispatchEvent(new CustomEvent("teams-updated", { detail: { teams, fileName } }));
+function parseTeamsFromText(text) {
+  const lines = text.split(/\r?\n/);
+  const teams = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const name = lines[i].trim();
+    if (!name) continue;
+
+    if (i === 0 && HEADER_KEYWORDS.has(name.toLowerCase())) continue;
+    teams.push(name);
+  }
+
+  return teams;
 }
 
-function clearTeams() {
-  AppState.teams = [];
-  AppState.fileName = null;
-  document.getElementById("team-file").value = "";
-  updateFileStatus();
-  document.dispatchEvent(new CustomEvent("teams-updated", { detail: { teams: [], fileName: null } }));
+function validateTeamCount(teams) {
+  if (teams.length < 2) {
+    alert("We need at least 2 team names. Check your input and try again.");
+    return false;
+  }
+  return true;
 }
 
-function updateFileStatus() {
-  const statusEl = document.getElementById("file-status");
-  const textEl = document.getElementById("file-status-text");
+function setTeams(section, teams, sourceLabel) {
+  AppState[section].teams = teams;
+  AppState[section].sourceLabel = sourceLabel;
+  updateFileStatus(section);
+  document.dispatchEvent(
+    new CustomEvent(`${section}-teams-updated`, { detail: { teams, sourceLabel } })
+  );
+}
 
-  if (AppState.teams.length === 0) {
+function clearTeams(section) {
+  AppState[section].teams = [];
+  AppState[section].sourceLabel = null;
+
+  const fileInput = document.getElementById(`${section}-team-file`);
+  const textarea = document.getElementById(`${section}-team-text`);
+  if (fileInput) fileInput.value = "";
+  if (textarea) textarea.value = "";
+
+  updateFileStatus(section);
+  document.dispatchEvent(
+    new CustomEvent(`${section}-teams-updated`, { detail: { teams: [], sourceLabel: null } })
+  );
+}
+
+function updateFileStatus(section) {
+  const statusEl = document.getElementById(`${section}-file-status`);
+  const textEl = document.getElementById(`${section}-file-status-text`);
+  if (!statusEl || !textEl) return;
+
+  const { teams, sourceLabel } = AppState[section];
+
+  if (teams.length === 0) {
     statusEl.hidden = true;
     return;
   }
 
   statusEl.hidden = false;
-  textEl.textContent = `${AppState.fileName} — ${AppState.teams.length} team${AppState.teams.length === 1 ? "" : "s"} loaded`;
+  const label = sourceLabel || "Manual entry";
+  textEl.textContent = `${label} — ${teams.length} team${teams.length === 1 ? "" : "s"} loaded`;
 }
 
-async function handleFile(file) {
+async function handleFile(section, file) {
   if (!file) return;
 
   const validTypes = [
@@ -78,24 +114,40 @@ async function handleFile(file) {
   const workbook = XLSX.read(buffer, { type: "array" });
   const teams = parseTeamsFromWorkbook(workbook);
 
-  if (teams.length < 2) {
-    alert("We need at least 2 team names in column A. Check your file and try again.");
-    return;
-  }
+  if (!validateTeamCount(teams)) return;
 
-  setTeams(teams, file.name);
+  const textarea = document.getElementById(`${section}-team-text`);
+  if (textarea) textarea.value = teams.join("\n");
+
+  setTeams(section, teams, file.name);
 }
 
-function initUpload() {
-  const zone = document.getElementById("upload-zone");
-  const input = document.getElementById("team-file");
-  const clearBtn = document.getElementById("clear-file");
+function handleManualEntry(section) {
+  const textarea = document.getElementById(`${section}-team-text`);
+  if (!textarea) return;
+
+  const teams = parseTeamsFromText(textarea.value);
+  if (!validateTeamCount(teams)) return;
+
+  const fileInput = document.getElementById(`${section}-team-file`);
+  if (fileInput) fileInput.value = "";
+
+  setTeams(section, teams, "Manual entry");
+}
+
+function initTeamInput(section) {
+  const zone = document.getElementById(`${section}-upload-zone`);
+  const input = document.getElementById(`${section}-team-file`);
+  const clearBtn = document.getElementById(`${section}-clear-teams`);
+  const applyBtn = document.getElementById(`${section}-apply-teams`);
+
+  if (!zone || !input) return;
 
   zone.addEventListener("click", () => input.click());
 
   input.addEventListener("change", (e) => {
     const file = e.target.files[0];
-    if (file) handleFile(file);
+    if (file) handleFile(section, file);
   });
 
   zone.addEventListener("dragover", (e) => {
@@ -109,10 +161,41 @@ function initUpload() {
     e.preventDefault();
     zone.classList.remove("dragover");
     const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (file) handleFile(section, file);
   });
 
-  clearBtn.addEventListener("click", clearTeams);
+  clearBtn?.addEventListener("click", () => clearTeams(section));
+  applyBtn?.addEventListener("click", () => handleManualEntry(section));
+}
+
+function renderTeamsPreview(section, teams) {
+  const preview = document.getElementById(`${section}-teams-preview`);
+  const empty = document.getElementById(`${section}-empty-state`);
+  const list = document.getElementById(`${section}-team-list`);
+  const count = document.getElementById(`${section}-team-count`);
+
+  if (!preview || !empty || !list || !count) return;
+
+  if (teams.length === 0) {
+    preview.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+
+  empty.hidden = true;
+  preview.hidden = false;
+  count.textContent = `(${teams.length})`;
+  list.innerHTML = teams
+    .map((t) => `<li>${escapeHtml(t)}</li>`)
+    .join("");
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function initScrollNav() {
@@ -127,7 +210,15 @@ function initScrollNav() {
   });
 }
 
+function initPlayoffPreview() {
+  document.addEventListener("playoff-teams-updated", (e) => {
+    renderTeamsPreview("playoff", e.detail.teams);
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  initUpload();
+  initTeamInput("qual");
+  initTeamInput("playoff");
+  initPlayoffPreview();
   initScrollNav();
 });

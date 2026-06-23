@@ -11,61 +11,20 @@
   <header class="site-header">
     <div class="container">
       <h1 class="site-title">Bracket Generator</h1>
-      <p class="site-tagline">Upload your roster once, generate qual groups and playoff brackets in seconds.</p>
+      <p class="site-tagline">Generate qual groups and playoff brackets in seconds — all in your browser.</p>
     </div>
   </header>
 
   <main>
-    <!-- Section 1: Intro & shared data input -->
+    <!-- Section 1: Intro -->
     <section id="intro" class="section section-hero">
       <div class="container">
         <div class="card">
           <h2>Get started</h2>
           <p class="lead">
-            Upload a spreadsheet with your team list, then jump to the generator you need.
-            Everything runs in your browser — nothing is uploaded to a server.
+            Choose a generator below. Each section has its own team list — upload a spreadsheet or type team names directly.
+            Nothing is sent to a server.
           </p>
-
-          <div class="upload-zone" id="upload-zone">
-            <input type="file" id="team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
-            <div class="upload-zone-inner">
-              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
-              </svg>
-              <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
-              <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
-            </div>
-          </div>
-
-          <div class="file-status" id="file-status" hidden>
-            <span class="status-dot status-dot--ok"></span>
-            <span id="file-status-text"></span>
-            <button type="button" class="btn-text" id="clear-file">Clear</button>
-          </div>
-
-          <details class="instructions">
-            <summary>How should my spreadsheet be organized?</summary>
-            <div class="instructions-body">
-              <p>Put every team name in <strong>column A</strong>, starting at the top-left cell (<strong>A1</strong>).</p>
-              <ul>
-                <li>One team per row — no blank rows between names.</li>
-                <li>Column A only; other columns are ignored.</li>
-                <li>Include a header like “Team” in A1 if you want — we detect and skip it automatically.</li>
-              </ul>
-              <p><strong>From Google Sheets:</strong> File → Download → Microsoft Excel (.xlsx) or Comma-separated values (.csv), then upload here.</p>
-              <div class="example-table-wrap">
-                <table class="example-table">
-                  <thead><tr><th></th><th>A</th></tr></thead>
-                  <tbody>
-                    <tr><td>1</td><td>Team Alpha</td></tr>
-                    <tr><td>2</td><td>Team Beta</td></tr>
-                    <tr><td>3</td><td>Team Gamma</td></tr>
-                    <tr><td>4</td><td>Team Delta</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </details>
 
           <div class="nav-buttons">
             <button type="button" class="btn btn-primary" data-scroll-to="qual-bracket">
@@ -91,13 +50,73 @@
             </p>
           </div>
 
-          <div class="teams-preview" id="teams-preview" hidden>
-            <h3>Loaded teams <span class="count" id="team-count"></span></h3>
-            <ul class="team-list" id="team-list"></ul>
+          <div class="data-input" id="qual-data-input">
+            <h3 class="data-input-title">Team list</h3>
+
+            <div class="upload-zone" id="qual-upload-zone">
+              <input type="file" id="qual-team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
+              <div class="upload-zone-inner">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                </svg>
+                <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
+                <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
+              </div>
+            </div>
+
+            <div class="input-divider"><span>or enter teams manually</span></div>
+
+            <div class="manual-input">
+              <label for="qual-team-text" class="sr-only">Team names</label>
+              <textarea
+                id="qual-team-text"
+                class="team-textarea"
+                rows="6"
+                placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
+              ></textarea>
+              <div class="manual-input-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="qual-apply-teams">Use these teams</button>
+              </div>
+            </div>
+
+            <div class="file-status" id="qual-file-status" hidden>
+              <span class="status-dot status-dot--ok"></span>
+              <span id="qual-file-status-text"></span>
+              <button type="button" class="btn-text" id="qual-clear-teams">Clear</button>
+            </div>
+
+            <details class="instructions">
+              <summary>How should my spreadsheet be organized?</summary>
+              <div class="instructions-body">
+                <p>Put every team name in <strong>column A</strong>, starting at the top-left cell (<strong>A1</strong>).</p>
+                <ul>
+                  <li>One team per row — no blank rows between names.</li>
+                  <li>Column A only; other columns are ignored.</li>
+                  <li>Include a header like "Team" in A1 if you want — we detect and skip it automatically.</li>
+                </ul>
+                <p><strong>From Google Sheets:</strong> File → Download → Microsoft Excel (.xlsx) or Comma-separated values (.csv), then upload here.</p>
+                <div class="example-table-wrap">
+                  <table class="example-table">
+                    <thead><tr><th></th><th>A</th></tr></thead>
+                    <tbody>
+                      <tr><td>1</td><td>Team Alpha</td></tr>
+                      <tr><td>2</td><td>Team Beta</td></tr>
+                      <tr><td>3</td><td>Team Gamma</td></tr>
+                      <tr><td>4</td><td>Team Delta</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="teams-preview" id="qual-teams-preview" hidden>
+            <h3>Loaded teams <span class="count" id="qual-team-count"></span></h3>
+            <ul class="team-list" id="qual-team-list"></ul>
           </div>
 
           <div class="empty-state" id="qual-empty-state">
-            <p>Upload a team list in the section above to configure qual groups.</p>
+            <p>Upload a file or enter team names above to configure qual groups.</p>
           </div>
 
           <form class="qual-form" id="qual-form" hidden>
@@ -133,7 +152,7 @@
       </div>
     </section>
 
-    <!-- Section 3: Playoff bracket (placeholder) -->
+    <!-- Section 3: Playoff bracket -->
     <section id="playoff-bracket" class="section section-playoff">
       <div class="container">
         <div class="card card-muted">
@@ -141,8 +160,66 @@
             <span class="section-badge section-badge--muted">Coming soon</span>
             <h2>Playoff bracket generator</h2>
             <p class="section-desc">
-              Single-elimination playoff brackets will be available here. Use the qual generator above in the meantime.
+              Single-elimination playoff brackets will be available here. Load your team list below to get ready.
             </p>
+          </div>
+
+          <div class="data-input" id="playoff-data-input">
+            <h3 class="data-input-title">Team list</h3>
+
+            <div class="upload-zone" id="playoff-upload-zone">
+              <input type="file" id="playoff-team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
+              <div class="upload-zone-inner">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                </svg>
+                <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
+                <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
+              </div>
+            </div>
+
+            <div class="input-divider"><span>or enter teams manually</span></div>
+
+            <div class="manual-input">
+              <label for="playoff-team-text" class="sr-only">Team names</label>
+              <textarea
+                id="playoff-team-text"
+                class="team-textarea"
+                rows="6"
+                placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
+              ></textarea>
+              <div class="manual-input-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="playoff-apply-teams">Use these teams</button>
+              </div>
+            </div>
+
+            <div class="file-status" id="playoff-file-status" hidden>
+              <span class="status-dot status-dot--ok"></span>
+              <span id="playoff-file-status-text"></span>
+              <button type="button" class="btn-text" id="playoff-clear-teams">Clear</button>
+            </div>
+
+            <details class="instructions">
+              <summary>How should my spreadsheet be organized?</summary>
+              <div class="instructions-body">
+                <p>Put every team name in <strong>column A</strong>, starting at the top-left cell (<strong>A1</strong>).</p>
+                <ul>
+                  <li>One team per row — no blank rows between names.</li>
+                  <li>Column A only; other columns are ignored.</li>
+                  <li>Include a header like "Team" in A1 if you want — we detect and skip it automatically.</li>
+                </ul>
+                <p><strong>From Google Sheets:</strong> File → Download → Microsoft Excel (.xlsx) or Comma-separated values (.csv), then upload here.</p>
+              </div>
+            </details>
+          </div>
+
+          <div class="teams-preview" id="playoff-teams-preview" hidden>
+            <h3>Loaded teams <span class="count" id="playoff-team-count"></span></h3>
+            <ul class="team-list" id="playoff-team-list"></ul>
+          </div>
+
+          <div class="empty-state" id="playoff-empty-state">
+            <p>Upload a file or enter team names above. Bracket generation is coming soon.</p>
           </div>
         </div>
       </div>
