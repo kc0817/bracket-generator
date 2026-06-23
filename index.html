@@ -64,27 +64,6 @@
               </div>
             </div>
 
-            <div class="input-divider"><span>or enter teams manually</span></div>
-
-            <div class="manual-input">
-              <label for="qual-team-text" class="sr-only">Team names</label>
-              <textarea
-                id="qual-team-text"
-                class="team-textarea"
-                rows="6"
-                placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
-              ></textarea>
-              <div class="manual-input-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="qual-apply-teams">Use these teams</button>
-              </div>
-            </div>
-
-            <div class="file-status" id="qual-file-status" hidden>
-              <span class="status-dot status-dot--ok"></span>
-              <span id="qual-file-status-text"></span>
-              <button type="button" class="btn-text" id="qual-clear-teams">Clear</button>
-            </div>
-
             <details class="instructions">
               <summary>How should my spreadsheet be organized?</summary>
               <div class="instructions-body">
@@ -108,6 +87,21 @@
                 </div>
               </div>
             </details>
+
+            <div class="input-divider"><span>or enter teams manually</span></div>
+
+            <div class="manual-input">
+              <label for="qual-team-text" class="sr-only">Team names</label>
+              <textarea
+                id="qual-team-text"
+                class="team-textarea"
+                rows="6"
+                placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
+              ></textarea>
+              <div class="manual-input-actions">
+                <button type="button" class="btn btn-generate btn-sm" id="qual-generate-btn" disabled>Generate</button>
+              </div>
+            </div>
           </div>
 
           <div class="teams-preview" id="qual-teams-preview" hidden>

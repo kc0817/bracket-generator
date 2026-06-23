@@ -195,6 +195,28 @@ body {
   font-size: 0.875rem;
 }
 
+.btn-generate {
+  color: #fff;
+  background: var(--secondary);
+}
+
+.btn-generate:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-generate:not(:disabled) {
+  background: var(--success);
+}
+
+.btn-generate:not(:disabled):hover {
+  background: #15803d;
+}
+
+.btn-generate:not(:disabled):active {
+  transform: scale(0.98);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

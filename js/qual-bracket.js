@@ -175,6 +175,25 @@ function updateScheduleNote(groupSize, gamesPerTeam) {
   }
 }
 
+function updateQualGenerateButton() {
+  const btn = document.getElementById("qual-generate-btn");
+  const textarea = document.getElementById("qual-team-text");
+  if (!btn || !textarea) return;
+
+  const teams = parseTeamsFromText(textarea.value);
+  btn.disabled = teams.length < 2;
+}
+
+function initQualGenerateButton() {
+  const btn = document.getElementById("qual-generate-btn");
+  const textarea = document.getElementById("qual-team-text");
+  if (!btn || !textarea) return;
+
+  textarea.addEventListener("input", updateQualGenerateButton);
+  btn.addEventListener("click", () => handleManualEntry("qual"));
+  updateQualGenerateButton();
+}
+
 function renderQualTeamsPreview(teams) {
   const preview = document.getElementById("qual-teams-preview");
   const empty = document.getElementById("qual-empty-state");
@@ -204,6 +223,7 @@ function initQualBracket() {
 
   document.addEventListener("qual-teams-updated", (e) => {
     renderQualTeamsPreview(e.detail.teams);
+    updateQualGenerateButton();
   });
 
   function onSettingsChange() {
@@ -236,4 +256,7 @@ function initQualBracket() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", initQualBracket);
+document.addEventListener("DOMContentLoaded", () => {
+  initQualBracket();
+  initQualGenerateButton();
+});
