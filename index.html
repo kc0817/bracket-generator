@@ -99,6 +99,10 @@
               </div>
             </details>
 
+            <div class="save-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="qual-save-file-btn" disabled>Save</button>
+            </div>
+
             <div class="input-divider"><span>Edit teams</span></div>
 
             <div class="manual-input">
@@ -110,18 +114,13 @@
                 placeholder="One team per line&#10;Team Alpha&#10;Team Beta&#10;Team Gamma"
               ></textarea>
               <div class="manual-input-actions">
-                <button type="button" class="btn btn-generate btn-sm" id="qual-generate-btn" disabled>Generate</button>
+                <button type="button" class="btn btn-primary btn-sm" id="qual-save-manual-btn" disabled>Save</button>
               </div>
             </div>
           </div>
 
-          <div class="teams-preview" id="qual-teams-preview" hidden>
-            <h3>Loaded teams <span class="count" id="qual-team-count"></span></h3>
-            <ul class="team-list" id="qual-team-list"></ul>
-          </div>
-
           <div class="empty-state" id="qual-empty-state">
-            <p>Upload a file or enter team names above to configure qual groups.</p>
+            <p>Add at least 2 teams above to preview qual groups and schedule.</p>
           </div>
 
           <form class="qual-form" id="qual-form" hidden>
@@ -140,13 +139,23 @@
 
             <div class="alert alert-info" id="schedule-note" hidden></div>
 
+            <div class="qual-bracket-preview" id="qual-bracket-preview">
+              <div class="qual-preview-section">
+                <h3 class="qual-preview-title">Groups</h3>
+                <div class="qual-groups-grid" id="qual-groups-display"></div>
+              </div>
+              <div class="qual-preview-section">
+                <h3 class="qual-preview-title">Schedule</h3>
+                <div class="qual-schedule-wrap" id="qual-schedule-display"></div>
+              </div>
+            </div>
+
             <div class="download-block">
               <button type="submit" class="btn btn-primary btn-lg" id="download-qual">
                 Download qual bracket (.xlsx)
               </button>
               <p class="download-desc">
-                Your download includes two sheets: <strong>Groups</strong> (teams sorted into Group A, B, C…)
-                and <strong>Schedule</strong> (every group match listed by round with home/away teams).
+                Download a spreadsheet copy of the groups and schedule shown above.
                 Teams are shuffled randomly into groups for fairness.
               </p>
             </div>

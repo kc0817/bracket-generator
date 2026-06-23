@@ -11,8 +11,29 @@ function shuffle(array) {
   return arr;
 }
 
-function chunkIntoGroups(teams, groupSize) {
-  const shuffled = shuffle(teams);
+function hashTeamList(teams) {
+  const key = [...teams].sort().join("\n");
+  let hash = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function shuffleWithSeed(array, seed) {
+  const arr = [...array];
+  let state = seed >>> 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    const j = state % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function chunkIntoGroups(teams, groupSize, seed) {
+  const shuffled = seed !== undefined ? shuffleWithSeed(teams, seed) : shuffle(teams);
   const groups = [];
   for (let i = 0; i < shuffled.length; i += groupSize) {
     groups.push(shuffled.slice(i, i + groupSize));
@@ -104,7 +125,7 @@ function buildGroupSchedule(teams, gamesPerTeam) {
   return { rounds: trimmedRounds, warning };
 }
 
-function generateQualBracket(teams, groupSize, gamesPerTeam) {
+function generateQualBracket(teams, groupSize, gamesPerTeam, seed) {
   if (teams.length < 2) {
     throw new Error("At least 2 teams are required.");
   }
@@ -115,7 +136,8 @@ function generateQualBracket(teams, groupSize, gamesPerTeam) {
     throw new Error("Games per team must be at least 1.");
   }
 
-  const rawGroups = chunkIntoGroups(teams, groupSize);
+  const groupSeed = seed !== undefined ? seed : hashTeamList(teams);
+  const rawGroups = chunkIntoGroups(teams, groupSize, groupSeed);
   const groups = rawGroups.map((groupTeams, i) => {
     const label = groupLabel(i);
     const { rounds, warning } = buildGroupSchedule(groupTeams, gamesPerTeam);
@@ -176,6 +198,10 @@ function updateScheduleNote(groupSize, gamesPerTeam) {
 }
 
 let qualReadFeedbackTimer = null;
+let qualPendingFile = null;
+let qualPendingFileTeams = [];
+let qualPendingFileValid = false;
+let qualPreviewGroups = null;
 
 const QUAL_READ_SUCCESS_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
@@ -196,6 +222,12 @@ function setQualUploadFilename(fileName) {
   zone.classList.add("upload-zone--has-file");
 }
 
+function resetQualPendingFile() {
+  qualPendingFile = null;
+  qualPendingFileTeams = [];
+  qualPendingFileValid = false;
+}
+
 function resetQualUploadZone() {
   const zone = document.getElementById("qual-upload-zone");
   const prompt = document.getElementById("qual-upload-prompt");
@@ -207,6 +239,7 @@ function resetQualUploadZone() {
   prompt.hidden = false;
   fileView.hidden = true;
   zone.classList.remove("upload-zone--has-file");
+  resetQualPendingFile();
 
   if (feedback) {
     clearTimeout(qualReadFeedbackTimer);
@@ -238,44 +271,197 @@ function showQualReadFeedback(success) {
   }, 2500);
 }
 
-function updateQualGenerateButton() {
-  const btn = document.getElementById("qual-generate-btn");
-  const textarea = document.getElementById("qual-team-text");
-  if (!btn || !textarea) return;
+async function stageQualFile(file) {
+  setQualUploadFilename(file.name);
+  qualPendingFile = file;
+  qualPendingFileTeams = [];
+  qualPendingFileValid = false;
 
-  const teams = parseTeamsFromText(textarea.value);
-  btn.disabled = teams.length < 2;
-}
+  const validTypes = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "text/csv",
+    "application/vnd.oasis.opendocument.spreadsheet",
+  ];
+  const ext = file.name.split(".").pop().toLowerCase();
+  const validExts = ["xlsx", "xls", "csv", "ods"];
 
-function initQualGenerateButton() {
-  const btn = document.getElementById("qual-generate-btn");
-  const textarea = document.getElementById("qual-team-text");
-  if (!btn || !textarea) return;
-
-  textarea.addEventListener("input", updateQualGenerateButton);
-  btn.addEventListener("click", () => handleManualEntry("qual"));
-  updateQualGenerateButton();
-}
-
-function renderQualTeamsPreview(teams) {
-  const preview = document.getElementById("qual-teams-preview");
-  const empty = document.getElementById("qual-empty-state");
-  const form = document.getElementById("qual-form");
-  const errorEl = document.getElementById("qual-error");
-
-  renderTeamsPreview("qual", teams);
-  errorEl.hidden = true;
-
-  if (teams.length === 0) {
-    form.hidden = true;
+  if (!validExts.includes(ext) && !validTypes.includes(file.type)) {
+    showQualReadFeedback(false);
+    updateQualSaveButtons();
     return;
   }
 
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const teams = parseTeamsFromWorkbook(workbook);
+
+    if (teams.length < 2) {
+      showQualReadFeedback(false);
+      updateQualSaveButtons();
+      return;
+    }
+
+    qualPendingFileTeams = teams;
+    qualPendingFileValid = true;
+    showQualReadFeedback(true);
+  } catch {
+    showQualReadFeedback(false);
+  }
+
+  updateQualSaveButtons();
+  updateQualBracketPreview();
+}
+
+function saveQualFromFile() {
+  if (!qualPendingFileValid || qualPendingFileTeams.length < 2) return;
+
+  const textarea = document.getElementById("qual-team-text");
+  if (textarea) textarea.value = qualPendingFileTeams.join("\n");
+
+  setTeams("qual", qualPendingFileTeams, qualPendingFile?.name || "Uploaded file");
+  updateQualSaveButtons();
+  updateQualBracketPreview();
+}
+
+function saveQualFromManual() {
+  handleManualEntry("qual");
+  updateQualBracketPreview();
+}
+
+function updateQualSaveButtons() {
+  const fileBtn = document.getElementById("qual-save-file-btn");
+  const manualBtn = document.getElementById("qual-save-manual-btn");
+  const textarea = document.getElementById("qual-team-text");
+
+  if (fileBtn) fileBtn.disabled = !qualPendingFileValid;
+
+  if (manualBtn && textarea) {
+    const manualTeams = parseTeamsFromText(textarea.value);
+    manualBtn.disabled = manualTeams.length < 2;
+  }
+}
+
+function initQualSaveButtons() {
+  const fileBtn = document.getElementById("qual-save-file-btn");
+  const manualBtn = document.getElementById("qual-save-manual-btn");
+  const textarea = document.getElementById("qual-team-text");
+
+  fileBtn?.addEventListener("click", saveQualFromFile);
+  manualBtn?.addEventListener("click", saveQualFromManual);
+  textarea?.addEventListener("input", () => {
+    updateQualSaveButtons();
+    updateQualBracketPreview();
+  });
+  updateQualSaveButtons();
+}
+
+function getQualPreviewTeams() {
+  const textarea = document.getElementById("qual-team-text");
+  const fromText = textarea ? parseTeamsFromText(textarea.value) : [];
+
+  if (fromText.length >= 2) return fromText;
+  if (AppState.qual.teams.length >= 2) return AppState.qual.teams;
+  if (qualPendingFileValid && qualPendingFileTeams.length >= 2) return qualPendingFileTeams;
+  return [];
+}
+
+function renderGroupsDisplay(groups) {
+  const container = document.getElementById("qual-groups-display");
+  if (!container) return;
+
+  container.innerHTML = groups
+    .map(
+      (group) => `
+        <div class="qual-group-card">
+          <h4>Group ${escapeHtml(group.label)}</h4>
+          <ol class="qual-group-list">
+            ${group.teams.map((team) => `<li>${escapeHtml(team)}</li>`).join("")}
+          </ol>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderScheduleDisplay(groups) {
+  const container = document.getElementById("qual-schedule-display");
+  if (!container) return;
+
+  const rows = [];
+  for (const group of groups) {
+    group.rounds.forEach((matches, roundIdx) => {
+      matches.forEach((match, matchIdx) => {
+        rows.push(`
+          <tr>
+            <td>Group ${escapeHtml(group.label)}</td>
+            <td>${roundIdx + 1}</td>
+            <td>${matchIdx + 1}</td>
+            <td>${escapeHtml(match[0])}</td>
+            <td>${escapeHtml(match[1])}</td>
+          </tr>
+        `);
+      });
+    });
+  }
+
+  if (rows.length === 0) {
+    container.innerHTML = '<p class="qual-preview-empty">No matches scheduled.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="qual-schedule-table">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Round</th>
+          <th>Match</th>
+          <th>Team 1</th>
+          <th>Team 2</th>
+        </tr>
+      </thead>
+      <tbody>${rows.join("")}</tbody>
+    </table>
+  `;
+}
+
+function updateQualBracketPreview() {
+  const form = document.getElementById("qual-form");
+  const empty = document.getElementById("qual-empty-state");
+  const errorEl = document.getElementById("qual-error");
+  const groupSizeInput = document.getElementById("group-size");
+  const gamesInput = document.getElementById("games-per-team");
+  const teams = getQualPreviewTeams();
+
+  if (!form || !empty) return;
+
+  errorEl.hidden = true;
+
+  if (teams.length < 2) {
+    form.hidden = true;
+    empty.hidden = false;
+    qualPreviewGroups = null;
+    return;
+  }
+
+  empty.hidden = true;
   form.hidden = false;
 
-  const groupSize = parseInt(document.getElementById("group-size").value, 10) || 4;
-  const gamesPerTeam = parseInt(document.getElementById("games-per-team").value, 10) || 3;
-  updateScheduleNote(groupSize, gamesPerTeam);
+  const groupSize = parseInt(groupSizeInput?.value, 10) || 4;
+  const gamesPerTeam = parseInt(gamesInput?.value, 10) || 3;
+
+  try {
+    qualPreviewGroups = generateQualBracket(teams, groupSize, gamesPerTeam);
+    renderGroupsDisplay(qualPreviewGroups);
+    renderScheduleDisplay(qualPreviewGroups);
+    updateScheduleNote(groupSize, gamesPerTeam);
+  } catch (err) {
+    qualPreviewGroups = null;
+    errorEl.hidden = false;
+    errorEl.textContent = err.message || "Could not generate qual bracket preview.";
+  }
 }
 
 function initQualBracket() {
@@ -285,35 +471,30 @@ function initQualBracket() {
   const errorEl = document.getElementById("qual-error");
 
   document.addEventListener("qual-teams-updated", (e) => {
-    renderQualTeamsPreview(e.detail.teams);
-    updateQualGenerateButton();
+    updateQualSaveButtons();
+    updateQualBracketPreview();
     if (e.detail.teams.length === 0 && !e.detail.sourceLabel) {
       resetQualUploadZone();
     }
   });
 
-  function onSettingsChange() {
-    const groupSize = parseInt(groupSizeInput.value, 10) || 4;
-    const gamesPerTeam = parseInt(gamesInput.value, 10) || 3;
-    updateScheduleNote(groupSize, gamesPerTeam);
-  }
-
-  groupSizeInput.addEventListener("input", onSettingsChange);
-  gamesInput.addEventListener("input", onSettingsChange);
+  groupSizeInput.addEventListener("input", updateQualBracketPreview);
+  gamesInput.addEventListener("input", updateQualBracketPreview);
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     errorEl.hidden = true;
 
-    const teams = AppState.qual.teams;
+    const teams = getQualPreviewTeams();
     const groupSize = parseInt(groupSizeInput.value, 10);
     const gamesPerTeam = parseInt(gamesInput.value, 10);
 
     try {
       if (teams.length < 2) {
-        throw new Error("Add at least 2 teams using the upload or manual entry above.");
+        throw new Error("Add at least 2 teams above to download a qual bracket.");
       }
-      const groups = generateQualBracket(teams, groupSize, gamesPerTeam);
+      const groups =
+        qualPreviewGroups || generateQualBracket(teams, groupSize, gamesPerTeam);
       downloadQualBracket(groups);
     } catch (err) {
       errorEl.hidden = false;
@@ -324,5 +505,6 @@ function initQualBracket() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initQualBracket();
-  initQualGenerateButton();
+  initQualSaveButtons();
+  updateQualBracketPreview();
 });

@@ -171,6 +171,12 @@ body {
   margin-top: 0.65rem;
 }
 
+.save-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 .team-textarea {
   width: 100%;
   padding: 0.75rem;
@@ -193,28 +199,6 @@ body {
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-}
-
-.btn-generate {
-  color: #fff;
-  background: var(--secondary);
-}
-
-.btn-generate:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.btn-generate:not(:disabled) {
-  background: var(--success);
-}
-
-.btn-generate:not(:disabled):hover {
-  background: #15803d;
-}
-
-.btn-generate:not(:disabled):active {
-  transform: scale(0.98);
 }
 
 .sr-only {
@@ -458,6 +442,16 @@ body {
   background: var(--primary-hover);
 }
 
+.btn-primary:disabled {
+  background: var(--secondary);
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-primary:disabled:hover {
+  background: var(--secondary);
+}
+
 .btn-secondary {
   color: #fff;
   background: var(--secondary);
@@ -587,8 +581,88 @@ body {
   border: 1px solid #bfdbfe;
 }
 
+.qual-bracket-preview {
+  margin-bottom: 1.5rem;
+}
+
+.qual-preview-section + .qual-preview-section {
+  margin-top: 1.5rem;
+}
+
+.qual-preview-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.qual-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.qual-group-card {
+  padding: 0.85rem 1rem;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.qual-group-card h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qual-group-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+}
+
+.qual-group-list li {
+  margin-bottom: 0.2rem;
+}
+
+.qual-schedule-wrap {
+  overflow-x: auto;
+}
+
+.qual-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.qual-schedule-table th,
+.qual-schedule-table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.qual-schedule-table th {
+  background: var(--surface-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.qual-schedule-table tbody tr:nth-child(even) {
+  background: rgba(244, 246, 249, 0.65);
+}
+
+.qual-preview-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
 .download-block {
   padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
 }
 
 .download-desc {

@@ -101,7 +101,8 @@ async function handleFile(section, file) {
   if (!file) return;
 
   if (section === "qual") {
-    setQualUploadFilename(file.name);
+    await stageQualFile(file);
+    return;
   }
 
   const validTypes = [
@@ -114,11 +115,7 @@ async function handleFile(section, file) {
   const validExts = ["xlsx", "xls", "csv", "ods"];
 
   if (!validExts.includes(ext) && !validTypes.includes(file.type)) {
-    if (section === "qual") {
-      showQualReadFeedback(false);
-    } else {
-      alert("Please upload an Excel (.xlsx, .xls), CSV, or ODS file.");
-    }
+    alert("Please upload an Excel (.xlsx, .xls), CSV, or ODS file.");
     return;
   }
 
@@ -128,7 +125,6 @@ async function handleFile(section, file) {
     const teams = parseTeamsFromWorkbook(workbook);
 
     if (!validateTeamCount(teams, section)) {
-      if (section === "qual") showQualReadFeedback(false);
       return;
     }
 
@@ -136,14 +132,8 @@ async function handleFile(section, file) {
     if (textarea) textarea.value = teams.join("\n");
 
     setTeams(section, teams, file.name);
-
-    if (section === "qual") showQualReadFeedback(true);
   } catch {
-    if (section === "qual") {
-      showQualReadFeedback(false);
-    } else {
-      alert("Could not read that file. Check the format and try again.");
-    }
+    alert("Could not read that file. Check the format and try again.");
   }
 }
 
@@ -153,11 +143,6 @@ function handleManualEntry(section) {
 
   const teams = parseTeamsFromText(textarea.value);
   if (!validateTeamCount(teams, section)) return;
-
-  const fileInput = document.getElementById(`${section}-team-file`);
-  if (fileInput) fileInput.value = "";
-
-  if (section === "qual") resetQualUploadZone();
 
   setTeams(section, teams, "Manual entry");
 }
