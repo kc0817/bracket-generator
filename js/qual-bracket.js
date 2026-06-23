@@ -175,6 +175,69 @@ function updateScheduleNote(groupSize, gamesPerTeam) {
   }
 }
 
+let qualReadFeedbackTimer = null;
+
+const QUAL_READ_SUCCESS_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+const QUAL_READ_ERROR_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+
+function setQualUploadFilename(fileName) {
+  const zone = document.getElementById("qual-upload-zone");
+  const prompt = document.getElementById("qual-upload-prompt");
+  const fileView = document.getElementById("qual-upload-file");
+  const fileNameEl = document.getElementById("qual-upload-filename");
+
+  if (!zone || !prompt || !fileView || !fileNameEl) return;
+
+  fileNameEl.textContent = fileName;
+  prompt.hidden = true;
+  fileView.hidden = false;
+  zone.classList.add("upload-zone--has-file");
+}
+
+function resetQualUploadZone() {
+  const zone = document.getElementById("qual-upload-zone");
+  const prompt = document.getElementById("qual-upload-prompt");
+  const fileView = document.getElementById("qual-upload-file");
+  const feedback = document.getElementById("qual-read-feedback");
+
+  if (!zone || !prompt || !fileView) return;
+
+  prompt.hidden = false;
+  fileView.hidden = true;
+  zone.classList.remove("upload-zone--has-file");
+
+  if (feedback) {
+    clearTimeout(qualReadFeedbackTimer);
+    feedback.hidden = true;
+    feedback.className = "upload-read-feedback";
+    feedback.innerHTML = "";
+  }
+}
+
+function showQualReadFeedback(success) {
+  const feedback = document.getElementById("qual-read-feedback");
+  if (!feedback) return;
+
+  clearTimeout(qualReadFeedbackTimer);
+
+  feedback.className = "upload-read-feedback";
+  feedback.classList.add(success ? "upload-read-feedback--success" : "upload-read-feedback--error");
+  feedback.innerHTML =
+    (success ? QUAL_READ_SUCCESS_ICON : QUAL_READ_ERROR_ICON) +
+    (success ? "Read successful" : "Read unsuccessful");
+  feedback.hidden = false;
+
+  qualReadFeedbackTimer = window.setTimeout(() => {
+    feedback.classList.add("upload-read-feedback--fading");
+    qualReadFeedbackTimer = window.setTimeout(() => {
+      feedback.hidden = true;
+      feedback.classList.remove("upload-read-feedback--fading");
+    }, 500);
+  }, 2500);
+}
+
 function updateQualGenerateButton() {
   const btn = document.getElementById("qual-generate-btn");
   const textarea = document.getElementById("qual-team-text");
@@ -224,6 +287,9 @@ function initQualBracket() {
   document.addEventListener("qual-teams-updated", (e) => {
     renderQualTeamsPreview(e.detail.teams);
     updateQualGenerateButton();
+    if (e.detail.teams.length === 0 && !e.detail.sourceLabel) {
+      resetQualUploadZone();
+    }
   });
 
   function onSettingsChange() {

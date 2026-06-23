@@ -56,11 +56,22 @@
             <div class="upload-zone" id="qual-upload-zone">
               <input type="file" id="qual-team-file" accept=".xlsx,.xls,.csv,.ods" hidden>
               <div class="upload-zone-inner">
-                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                  <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
-                </svg>
-                <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
-                <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
+                <div class="upload-zone-prompt" id="qual-upload-prompt">
+                  <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                  </svg>
+                  <p class="upload-label"><strong>Drop your file here</strong> or click to browse</p>
+                  <p class="upload-hint">Excel (.xlsx, .xls), CSV, or OpenDocument (.ods)</p>
+                </div>
+                <div class="upload-zone-file" id="qual-upload-file" hidden>
+                  <svg class="upload-icon upload-icon--file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                  <p class="upload-filename" id="qual-upload-filename"></p>
+                  <p class="upload-hint">Click or drop a different file to replace</p>
+                </div>
+                <div class="upload-read-feedback" id="qual-read-feedback" hidden role="status" aria-live="polite"></div>
               </div>
             </div>
 
@@ -88,7 +99,7 @@
               </div>
             </details>
 
-            <div class="input-divider"><span>or enter teams manually</span></div>
+            <div class="input-divider"><span>Edit teams</span></div>
 
             <div class="manual-input">
               <label for="qual-team-text" class="sr-only">Team names</label>
@@ -172,7 +183,7 @@
               </div>
             </div>
 
-            <div class="input-divider"><span>or enter teams manually</span></div>
+            <div class="input-divider"><span>Edit teams</span></div>
 
             <div class="manual-input">
               <label for="playoff-team-text" class="sr-only">Team names</label>

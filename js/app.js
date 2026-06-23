@@ -44,9 +44,11 @@ function parseTeamsFromText(text) {
   return teams;
 }
 
-function validateTeamCount(teams) {
+function validateTeamCount(teams, section) {
   if (teams.length < 2) {
-    alert("We need at least 2 team names. Check your input and try again.");
+    if (section !== "qual") {
+      alert("We need at least 2 team names. Check your input and try again.");
+    }
     return false;
   }
   return true;
@@ -69,6 +71,8 @@ function clearTeams(section) {
   const textarea = document.getElementById(`${section}-team-text`);
   if (fileInput) fileInput.value = "";
   if (textarea) textarea.value = "";
+
+  if (section === "qual") resetQualUploadZone();
 
   updateFileStatus(section);
   document.dispatchEvent(
@@ -96,6 +100,10 @@ function updateFileStatus(section) {
 async function handleFile(section, file) {
   if (!file) return;
 
+  if (section === "qual") {
+    setQualUploadFilename(file.name);
+  }
+
   const validTypes = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.ms-excel",
@@ -106,20 +114,37 @@ async function handleFile(section, file) {
   const validExts = ["xlsx", "xls", "csv", "ods"];
 
   if (!validExts.includes(ext) && !validTypes.includes(file.type)) {
-    alert("Please upload an Excel (.xlsx, .xls), CSV, or ODS file.");
+    if (section === "qual") {
+      showQualReadFeedback(false);
+    } else {
+      alert("Please upload an Excel (.xlsx, .xls), CSV, or ODS file.");
+    }
     return;
   }
 
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array" });
-  const teams = parseTeamsFromWorkbook(workbook);
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const teams = parseTeamsFromWorkbook(workbook);
 
-  if (!validateTeamCount(teams)) return;
+    if (!validateTeamCount(teams, section)) {
+      if (section === "qual") showQualReadFeedback(false);
+      return;
+    }
 
-  const textarea = document.getElementById(`${section}-team-text`);
-  if (textarea) textarea.value = teams.join("\n");
+    const textarea = document.getElementById(`${section}-team-text`);
+    if (textarea) textarea.value = teams.join("\n");
 
-  setTeams(section, teams, file.name);
+    setTeams(section, teams, file.name);
+
+    if (section === "qual") showQualReadFeedback(true);
+  } catch {
+    if (section === "qual") {
+      showQualReadFeedback(false);
+    } else {
+      alert("Could not read that file. Check the format and try again.");
+    }
+  }
 }
 
 function handleManualEntry(section) {
@@ -127,10 +152,12 @@ function handleManualEntry(section) {
   if (!textarea) return;
 
   const teams = parseTeamsFromText(textarea.value);
-  if (!validateTeamCount(teams)) return;
+  if (!validateTeamCount(teams, section)) return;
 
   const fileInput = document.getElementById(`${section}-team-file`);
   if (fileInput) fileInput.value = "";
+
+  if (section === "qual") resetQualUploadZone();
 
   setTeams(section, teams, "Manual entry");
 }
