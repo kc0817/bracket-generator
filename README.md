@@ -1,2 +1,3 @@
 # bracket-generator
-an easy way to replace manual bracket generation
+a website providing an easy way to replace manual bracket generation
+link here: https://kc0817.github.io/bracket-generator/
